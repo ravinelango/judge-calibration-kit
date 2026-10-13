@@ -6,8 +6,8 @@ from collections.abc import Sequence
 from datetime import datetime, timezone
 
 from .dataset import Example
-from .judges import Verdict
-from .metrics import CalibrationSummary, Interval
+from .judges import DEFAULT_RUBRIC, Verdict
+from .metrics import CalibrationSummary, Interval, per_criterion
 
 
 def _pct(x: float) -> str:
@@ -26,6 +26,22 @@ def _cell(text: str, limit: int = 80) -> str:
 def _kci(summary: CalibrationSummary) -> str:
     ci = summary.kappa_ci
     return "n/a" if ci is None else f"{ci.low:.3f} to {ci.high:.3f}"
+
+
+def _criterion_rows(examples: Sequence[Example], verdicts: Sequence[Verdict]) -> list[str]:
+    stats = per_criterion(
+        [e.rubric or f"(default) {DEFAULT_RUBRIC}" for e in examples],
+        [e.human_label for e in examples],
+        [v.label for v in verdicts],
+    )
+    rows = []
+    for c, m in sorted(stats.items(), key=lambda kv: (-kv[1]["n"], kv[0])):
+        kappa = f"{m['kappa']:.3f}" if m["n"] >= 2 else "n/a"
+        rows.append(
+            f"| {_cell(c, 60)} | {m['n']} | {_pct(m['raw_agreement'])} | {kappa} | "
+            f"{m['lenient']} | {m['strict']} |"
+        )
+    return rows
 
 
 def kappa_band(k: float) -> str:
@@ -81,6 +97,12 @@ def render(
         "",
         f"- Judge too lenient (human fail, judge pass): {c['fail']['pass']}",
         f"- Judge too strict (human pass, judge fail): {c['pass']['fail']}",
+        "",
+        "## By rubric criterion",
+        "",
+        "| Criterion | n | Agreement | Kappa | Too lenient | Too strict |",
+        "|---|---|---|---|---|---|",
+        *_criterion_rows(examples, verdicts),
         "",
         "## Disagreements",
         "",

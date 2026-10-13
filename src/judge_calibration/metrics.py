@@ -105,3 +105,23 @@ def summarize(human: Sequence[str], judge: Sequence[str]) -> CalibrationSummary:
         judge_pass_rate=wilson_interval(list(judge).count("pass"), n),
         kappa_ci=bootstrap_kappa_ci(human, judge),
     )
+
+
+def per_criterion(
+    criteria: Sequence[str], human: Sequence[str], judge: Sequence[str]
+) -> dict[str, dict[str, float | int]]:
+    """Agreement and kappa broken down by rubric criterion (e.g. the example's rubric text)."""
+    groups: dict[str, list[tuple[str, str]]] = {}
+    for c, h, j in zip(criteria, human, judge, strict=True):
+        groups.setdefault(c, []).append((h, j))
+    out: dict[str, dict[str, float | int]] = {}
+    for c, pairs in groups.items():
+        hs, js = [h for h, _ in pairs], [j for _, j in pairs]
+        out[c] = {
+            "n": len(pairs),
+            "raw_agreement": raw_agreement(hs, js),
+            "kappa": cohens_kappa(hs, js),
+            "lenient": sum(h == "fail" and j == "pass" for h, j in pairs),
+            "strict": sum(h == "pass" and j == "fail" for h, j in pairs),
+        }
+    return out

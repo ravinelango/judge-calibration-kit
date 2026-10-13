@@ -14,5 +14,5 @@ def test_cli_end_to_end_with_mock(tmp_path):
     md = out.read_text()
     assert "Cohen's kappa" in md and "Synthetic demo" in md and "## Disagreements" in md
     data = json.loads(js.read_text())
-    assert "Kappa 95% CI" in md and len(data["kappa_ci_95"]) == 2
+    assert "Kappa 95% CI" in md and "## By rubric criterion" in md and len(data["kappa_ci_95"]) == 2
     assert data["n"] == 10 and data["synthetic"] is True

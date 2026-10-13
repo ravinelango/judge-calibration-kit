@@ -74,3 +74,11 @@ def test_bootstrap_kappa_ci_perfect_agreement_is_degenerate():
 
 def test_summarize_includes_kappa_ci():
     assert summarize(["pass", "fail"], ["pass", "fail"]).kappa_ci is not None
+
+
+def test_per_criterion_breakdown():
+    from judge_calibration.metrics import per_criterion
+
+    out = per_criterion(["a", "a", "b"], ["pass", "fail", "fail"], ["pass", "pass", "fail"])
+    assert out["a"]["n"] == 2 and out["a"]["raw_agreement"] == 0.5 and out["a"]["lenient"] == 1
+    assert out["b"] == {"n": 1, "raw_agreement": 1.0, "kappa": 1.0, "lenient": 0, "strict": 0}

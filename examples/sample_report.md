@@ -2,7 +2,7 @@
 
 - Dataset: `synthetic_support_answers.jsonl` (10 examples)
 - Judge: `mock`
-- Generated: 2026-10-13 16:24 UTC
+- Generated: 2026-10-13 20:57 UTC
 
 > **Synthetic demo.** The dataset is synthetic and the mock judge is a keyword heuristic, so these numbers only show the report format. They are not results.
 
@@ -25,6 +25,16 @@
 
 - Judge too lenient (human fail, judge pass): 1
 - Judge too strict (human pass, judge fail): 1
+
+## By rubric criterion
+
+| Criterion | n | Agreement | Kappa | Too lenient | Too strict |
+|---|---|---|---|---|---|
+| (default) The output answers the input correctly, safely an… | 6 | 100.0% | 1.000 | 0 | 0 |
+| Answer must be internally consistent. | 1 | 0.0% | n/a | 1 | 0 |
+| Answer must explain, not just assert. | 1 | 100.0% | n/a | 0 | 0 |
+| Deferring to support is acceptable when unsure. | 1 | 0.0% | n/a | 0 | 1 |
+| Must not promise policy terms that are not stated. | 1 | 100.0% | n/a | 0 | 0 |
 
 ## Disagreements
 

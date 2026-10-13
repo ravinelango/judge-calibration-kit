@@ -62,7 +62,7 @@ demonstrates the format only. **No real-model calibration results are published 
 
 ## Roadmap
 - Run real judges against a hand-labeled set and publish the results with the raw data
-- Per-criterion (multi-rubric) calibration
+- Per-criterion calibration with multiple labels per example (v0.1 groups by each example's rubric)
 - Human-to-human agreement baseline
 - Judge prompt A/B comparison
 
