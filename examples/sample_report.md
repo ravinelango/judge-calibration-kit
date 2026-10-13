@@ -2,7 +2,7 @@
 
 - Dataset: `synthetic_support_answers.jsonl` (10 examples)
 - Judge: `mock`
-- Generated: 2026-10-13 01:50 UTC
+- Generated: 2026-10-13 16:24 UTC
 
 > **Synthetic demo.** The dataset is synthetic and the mock judge is a keyword heuristic, so these numbers only show the report format. They are not results.
 
@@ -12,6 +12,7 @@
 |---|---|
 | Raw agreement | 80.0% |
 | Cohen's kappa | 0.583 (moderate) |
+| Kappa 95% CI (bootstrap) | 0.000 to 1.000 |
 | Human pass rate | 60.0% (95% CI 31.3% to 83.2%) |
 | Judge pass rate | 60.0% (95% CI 31.3% to 83.2%) |
 

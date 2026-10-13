@@ -23,6 +23,11 @@ def _cell(text: str, limit: int = 80) -> str:
     return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
+def _kci(summary: CalibrationSummary) -> str:
+    ci = summary.kappa_ci
+    return "n/a" if ci is None else f"{ci.low:.3f} to {ci.high:.3f}"
+
+
 def kappa_band(k: float) -> str:
     """Landis & Koch (1977) descriptive bands. A convention, not a pass/fail threshold."""
     if k < 0:
@@ -63,6 +68,7 @@ def render(
         "|---|---|",
         f"| Raw agreement | {_pct(summary.raw_agreement)} |",
         f"| Cohen's kappa | {summary.kappa:.3f} ({kappa_band(summary.kappa)}) |",
+        f"| Kappa 95% CI (bootstrap) | {_kci(summary)} |",
         f"| Human pass rate | {_ci(summary.human_pass_rate)} |",
         f"| Judge pass rate | {_ci(summary.judge_pass_rate)} |",
         "",

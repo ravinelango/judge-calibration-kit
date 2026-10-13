@@ -44,6 +44,9 @@ def main(argv: list[str] | None = None) -> int:
                     "n": summary.n,
                     "raw_agreement": summary.raw_agreement,
                     "kappa": summary.kappa,
+                    "kappa_ci_95": (
+                        [summary.kappa_ci.low, summary.kappa_ci.high] if summary.kappa_ci else None
+                    ),
                     "confusion": summary.confusion,
                     "synthetic": args.synthetic,
                 },

@@ -48,6 +48,7 @@ One JSON object per line: `input`, `output`, `human_label` (`pass`/`fail`), and 
 |---|---|
 | Raw agreement | Share of items where judge and human match |
 | Cohen's kappa | Agreement beyond chance; bands per Landis & Koch (1977) as a rough guide |
+| Kappa 95% CI | Seeded percentile bootstrap (2,000 resamples of items), so reports are reproducible |
 | Confusion matrix | Rows are human labels, columns are judge labels |
 | Pass rates + Wilson 95% CI | Whether the judge's pass rate is biased relative to humans |
 
@@ -64,7 +65,6 @@ demonstrates the format only. **No real-model calibration results are published 
 - Per-criterion (multi-rubric) calibration
 - Human-to-human agreement baseline
 - Judge prompt A/B comparison
-- Bootstrap CI for kappa
 
 ## License
 MIT © Ravin Elango
