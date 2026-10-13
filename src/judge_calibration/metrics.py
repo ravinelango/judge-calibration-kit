@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import random
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -55,6 +56,33 @@ def cohens_kappa(human: Sequence[str], judge: Sequence[str]) -> float:
     return (po - pe) / (1 - pe)
 
 
+def bootstrap_kappa_ci(
+    human: Sequence[str],
+    judge: Sequence[str],
+    n_resamples: int = 2000,
+    confidence: float = 0.95,
+    seed: int = 0,
+) -> Interval:
+    """Percentile bootstrap CI for Cohen's kappa, resampling items with replacement.
+
+    Seeded so reports are reproducible. Small samples give wide intervals; that is the point.
+    """
+    n = len(human)
+    if n == 0:
+        raise ValueError("need at least one label")
+    rng = random.Random(seed)
+    pairs = list(zip(human, judge, strict=True))
+    stats = []
+    for _ in range(n_resamples):
+        sample = [pairs[rng.randrange(n)] for _ in range(n)]
+        stats.append(cohens_kappa([h for h, _ in sample], [j for _, j in sample]))
+    stats.sort()
+    alpha = (1 - confidence) / 2
+    lo = stats[int(alpha * (n_resamples - 1))]
+    hi = stats[int(math.ceil((1 - alpha) * (n_resamples - 1)))]
+    return Interval(cohens_kappa(human, judge), lo, hi)
+
+
 @dataclass(frozen=True)
 class CalibrationSummary:
     n: int
@@ -63,6 +91,7 @@ class CalibrationSummary:
     confusion: dict[str, dict[str, int]]
     human_pass_rate: Interval
     judge_pass_rate: Interval
+    kappa_ci: Interval | None = None
 
 
 def summarize(human: Sequence[str], judge: Sequence[str]) -> CalibrationSummary:
@@ -74,4 +103,5 @@ def summarize(human: Sequence[str], judge: Sequence[str]) -> CalibrationSummary:
         confusion=confusion_matrix(human, judge),
         human_pass_rate=wilson_interval(list(human).count("pass"), n),
         judge_pass_rate=wilson_interval(list(judge).count("pass"), n),
+        kappa_ci=bootstrap_kappa_ci(human, judge),
     )

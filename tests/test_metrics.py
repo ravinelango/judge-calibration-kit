@@ -50,3 +50,27 @@ def test_wilson_edges_stay_in_bounds():
 def test_summarize():
     s = summarize(["pass", "fail"], ["pass", "pass"])
     assert s.n == 2 and s.judge_pass_rate.point == 1.0 and s.human_pass_rate.point == 0.5
+
+
+def test_bootstrap_kappa_ci_reproducible_and_contains_point():
+    from judge_calibration.metrics import bootstrap_kappa_ci
+
+    h = ["pass"] * 25 + ["fail"] * 25
+    j = ["pass"] * 20 + ["fail"] * 5 + ["pass"] * 10 + ["fail"] * 15
+    a = bootstrap_kappa_ci(h, j, n_resamples=500, seed=1)
+    b = bootstrap_kappa_ci(h, j, n_resamples=500, seed=1)
+    assert a == b
+    assert a.low <= 0.4 <= a.high and a.point == pytest.approx(0.4)
+    assert a.high - a.low > 0.1
+
+
+def test_bootstrap_kappa_ci_perfect_agreement_is_degenerate():
+    from judge_calibration.metrics import bootstrap_kappa_ci
+
+    h = ["pass", "fail"] * 10
+    ci = bootstrap_kappa_ci(h, h, n_resamples=200)
+    assert ci.low == ci.high == 1.0
+
+
+def test_summarize_includes_kappa_ci():
+    assert summarize(["pass", "fail"], ["pass", "fail"]).kappa_ci is not None
