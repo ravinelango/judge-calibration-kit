@@ -1,0 +1,11 @@
+# SYNTHETIC EXAMPLE DATA. Written by hand for demos; not from any real system or user.
+{"id": "s01", "input": "How do I reset my password?", "output": "Go to Settings, choose Security, then select Reset password and follow the emailed link.", "human_label": "pass"}
+{"id": "s02", "input": "Can I get a refund after 30 days?", "output": "Refunds are always available at any time, no questions asked.", "human_label": "fail", "rubric": "Must not promise policy terms that are not stated."}
+{"id": "s03", "input": "What file types can I upload?", "output": "PDF, PNG and JPG files up to 10 MB are supported.", "human_label": "pass"}
+{"id": "s04", "input": "Is my data encrypted?", "output": "Yes.", "human_label": "fail", "rubric": "Answer must explain, not just assert."}
+{"id": "s05", "input": "How do I export my reports?", "output": "I don't know, but you can contact support from the Help menu for export options.", "human_label": "pass", "rubric": "Deferring to support is acceptable when unsure."}
+{"id": "s06", "input": "Will the update fix the sync bug?", "output": "The update is guaranteed to fix every sync problem you have.", "human_label": "fail"}
+{"id": "s07", "input": "How many users can share a workspace?", "output": "Up to 25 users can share a workspace on the standard plan.", "human_label": "pass"}
+{"id": "s08", "input": "Can I schedule a report weekly?", "output": "Weekly scheduling lets you pick a day and the report is emailed to you automatically every month.", "human_label": "fail", "rubric": "Answer must be internally consistent."}
+{"id": "s09", "input": "Does the app work offline?", "output": "Viewing cached documents works offline; editing needs a connection.", "human_label": "pass"}
+{"id": "s10", "input": "How do I delete my account?", "output": "Open Settings, choose Account, select Delete account and confirm by email.", "human_label": "pass"}
