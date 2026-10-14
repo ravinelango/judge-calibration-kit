@@ -1,4 +1,4 @@
-"""Command line entry point: jck run --data FILE --judge mock --out report.md"""
+"""Command line entry point: jck run / jck agree."""
 
 from __future__ import annotations
 
@@ -10,20 +10,10 @@ from pathlib import Path
 from .dataset import load_jsonl
 from .judges import get_judge
 from .metrics import summarize
-from .report import render
+from .report import render, render_human_agreement
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="jck", description=__doc__)
-    sub = parser.add_subparsers(dest="cmd", required=True)
-    run = sub.add_parser("run", help="judge a labeled dataset and write a report")
-    run.add_argument("--data", required=True, type=Path)
-    run.add_argument("--judge", default="mock", help="mock | openai[:model] | anthropic[:model]")
-    run.add_argument("--out", type=Path, help="markdown report path (default: stdout)")
-    run.add_argument("--json", type=Path, help="optional machine-readable summary")
-    run.add_argument("--synthetic", action="store_true", help="label the report as a demo")
-    args = parser.parse_args(argv)
-
+def _cmd_run(args: argparse.Namespace) -> int:
     examples = load_jsonl(args.data)
     judge = get_judge(args.judge)
     verdicts = [judge.judge(e) for e in examples]
@@ -40,6 +30,7 @@ def main(argv: list[str] | None = None) -> int:
         args.json.write_text(
             json.dumps(
                 {
+                    "mode": "judge",
                     "judge": judge.name,
                     "n": summary.n,
                     "raw_agreement": summary.raw_agreement,
@@ -54,6 +45,94 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
     return 0
+
+
+def _cmd_agree(args: argparse.Namespace) -> int:
+    examples = load_jsonl(
+        args.data,
+        label_a_field=args.col_a,
+        label_b_field=args.col_b,
+    )
+    missing = [e.id for e in examples if e.human_b is None]
+    if missing:
+        raise SystemExit(
+            f"human-to-human mode needs both '{args.col_a}' and '{args.col_b}' on every row; "
+            f"missing {args.col_b} on: {', '.join(missing[:5])}"
+            + ("…" if len(missing) > 5 else "")
+        )
+    summary = summarize(
+        [e.human_label for e in examples],
+        [e.human_b for e in examples],  # type: ignore[misc]
+    )
+    md = render_human_agreement(
+        examples,
+        summary,
+        args.data.name,
+        rater_a=args.col_a,
+        rater_b=args.col_b,
+        synthetic=args.synthetic,
+    )
+    if args.out:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(md, encoding="utf-8")
+        print(
+            f"wrote {args.out}  kappa={summary.kappa:.3f}  agreement={summary.raw_agreement:.3f} "
+            f"({args.col_a} vs {args.col_b})"
+        )
+    else:
+        sys.stdout.write(md)
+    if args.json:
+        args.json.write_text(
+            json.dumps(
+                {
+                    "mode": "human_human",
+                    "rater_a": args.col_a,
+                    "rater_b": args.col_b,
+                    "n": summary.n,
+                    "raw_agreement": summary.raw_agreement,
+                    "kappa": summary.kappa,
+                    "kappa_ci_95": (
+                        [summary.kappa_ci.low, summary.kappa_ci.high] if summary.kappa_ci else None
+                    ),
+                    "confusion": summary.confusion,
+                    "synthetic": args.synthetic,
+                },
+                indent=2,
+            )
+        )
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(prog="jck", description=__doc__)
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    run = sub.add_parser("run", help="judge a labeled dataset and write a report")
+    run.add_argument("--data", required=True, type=Path)
+    run.add_argument("--judge", default="mock", help="mock | openai[:model] | anthropic[:model]")
+    run.add_argument("--out", type=Path, help="markdown report path (default: stdout)")
+    run.add_argument("--json", type=Path, help="optional machine-readable summary")
+    run.add_argument("--synthetic", action="store_true", help="label the report as a demo")
+    run.set_defaults(func=_cmd_run)
+
+    agree = sub.add_parser(
+        "agree",
+        help="compare two human label columns (no judge); measure inter-rater agreement",
+    )
+    agree.add_argument("--data", required=True, type=Path)
+    agree.add_argument(
+        "--col-a",
+        default="human_a",
+        help="JSONL field for rater A (also accepts human_label as fallback)",
+    )
+    agree.add_argument("--col-b", default="human_b", help="JSONL field for rater B")
+    agree.add_argument("--out", type=Path, help="markdown report path (default: stdout)")
+    agree.add_argument("--json", type=Path, help="optional machine-readable summary")
+    agree.add_argument("--synthetic", action="store_true", help="label the report as a demo")
+    agree.set_defaults(func=_cmd_agree)
+
+    args = parser.parse_args(argv)
+    return args.func(args)
 
 
 if __name__ == "__main__":

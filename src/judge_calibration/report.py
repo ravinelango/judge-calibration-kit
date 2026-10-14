@@ -123,3 +123,63 @@ def render(
             f"_Note: n={summary.n} is small; treat kappa and the intervals as rough._",
         ]
     return "\n".join(lines) + "\n"
+
+
+def render_human_agreement(
+    examples: Sequence[Example],
+    summary: CalibrationSummary,
+    dataset_name: str,
+    *,
+    rater_a: str = "human_a",
+    rater_b: str = "human_b",
+    synthetic: bool = False,
+) -> str:
+    """Markdown report for agreement between two human label columns (no judge)."""
+    c = summary.confusion
+    lines = [
+        "# Human–human agreement report",
+        "",
+        f"- Dataset: `{dataset_name}` ({summary.n} examples)",
+        f"- Raters: `{rater_a}` vs `{rater_b}`",
+        f"- Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
+    ]
+    if synthetic:
+        lines += [
+            "",
+            "> **Synthetic demo.** Labels are hand-written for format checks, not a study result.",
+        ]
+    lines += [
+        "",
+        "## Agreement",
+        "",
+        "| Metric | Value |",
+        "|---|---|",
+        f"| Raw agreement | {_pct(summary.raw_agreement)} |",
+        f"| Cohen's kappa | {summary.kappa:.3f} ({kappa_band(summary.kappa)}) |",
+        f"| Kappa 95% CI (bootstrap) | {_kci(summary)} |",
+        f"| {rater_a} pass rate | {_ci(summary.human_pass_rate)} |",
+        f"| {rater_b} pass rate | {_ci(summary.judge_pass_rate)} |",
+        "",
+        f"## Confusion matrix (rows: {rater_a}, columns: {rater_b})",
+        "",
+        f"| | {rater_b} pass | {rater_b} fail |",
+        "|---|---|---|",
+        f"| **{rater_a} pass** | {c['pass']['pass']} | {c['pass']['fail']} |",
+        f"| **{rater_a} fail** | {c['fail']['pass']} | {c['fail']['fail']} |",
+        "",
+        "## Disagreements",
+        "",
+    ]
+    rows = [e for e in examples if e.human_b is not None and e.human_label != e.human_b]
+    if not rows:
+        lines.append(f"None. `{rater_a}` and `{rater_b}` matched on every example.")
+    else:
+        lines += [f"| id | {rater_a} | {rater_b} | output |", "|---|---|---|---|"]
+        for e in rows:
+            lines.append(f"| {e.id} | {e.human_label} | {e.human_b} | {_cell(e.output)} |")
+    if summary.n < 50:
+        lines += [
+            "",
+            f"_Note: n={summary.n} is small; treat kappa and the intervals as rough._",
+        ]
+    return "\n".join(lines) + "\n"

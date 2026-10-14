@@ -1,0 +1,9 @@
+# SYNTHETIC EXAMPLE DATA. Two hand-written raters for human–human agreement demos; not a real study.
+{"id": "s01", "input": "How do I reset my password?", "output": "Go to Settings, choose Security, then select Reset password and follow the emailed link.", "human_a": "pass", "human_b": "pass"}
+{"id": "s02", "input": "Can I get a refund after 30 days?", "output": "Refunds are always available at any time, no questions asked.", "human_a": "fail", "human_b": "fail", "rubric": "Must not promise policy terms that are not stated."}
+{"id": "s03", "input": "What file types can I upload?", "output": "PDF, PNG and JPG files up to 10 MB are supported.", "human_a": "pass", "human_b": "pass"}
+{"id": "s04", "input": "Is my data encrypted?", "output": "Yes.", "human_a": "fail", "human_b": "pass", "rubric": "Answer must explain, not just assert."}
+{"id": "s05", "input": "How long is a trial?", "output": "The trial lasts 14 days from signup.", "human_a": "pass", "human_b": "pass"}
+{"id": "s06", "input": "Can I change my email?", "output": "Maybe try support.", "human_a": "fail", "human_b": "fail", "rubric": "Must give concrete steps."}
+{"id": "s07", "input": "Do you offer SSO?", "output": "Enterprise plans include SAML SSO.", "human_a": "pass", "human_b": "fail"}
+{"id": "s08", "input": "Where are the invoices?", "output": "Billing > Invoices lists PDF downloads by month.", "human_a": "pass", "human_b": "pass"}

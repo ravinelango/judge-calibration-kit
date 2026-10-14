@@ -32,6 +32,11 @@ jck run --data examples/synthetic_support_answers.jsonl --judge mock --synthetic
 ```
 See [`examples/sample_report.md`](examples/sample_report.md) for the output.
 
+Human–human agreement (two label columns, no judge):
+```bash
+jck agree --data examples/synthetic_two_raters.jsonl --col-a human_a --col-b human_b --synthetic --out reports/agree.md
+```
+
 Using a real model (optional; keys read from the environment):
 ```bash
 pip install -e '.[openai]'      # or '.[anthropic]'
@@ -42,6 +47,9 @@ jck run --data my_labels.jsonl --judge openai:gpt-4o-mini --out reports/openai.m
 ## Data format
 One JSON object per line: `input`, `output`, `human_label` (`pass`/`fail`), and optional
 `id` and `rubric`. Label with the [labeling guide](docs/labeling-guide.md).
+
+For `jck agree`, use two rater fields (default `human_a` / `human_b`; configurable via
+`--col-a` / `--col-b`). `human_label` is still accepted as the primary column.
 
 ## Methodology
 | Metric | What it tells you |
@@ -63,7 +71,7 @@ demonstrates the format only. **No real-model calibration results are published 
 ## Roadmap
 - Run real judges against a hand-labeled set and publish the results with the raw data
 - Per-criterion calibration with multiple labels per example (v0.1 groups by each example's rubric)
-- Human-to-human agreement baseline
+- ~~Human-to-human agreement baseline~~ (`jck agree`)
 - Judge prompt A/B comparison
 
 ## License
