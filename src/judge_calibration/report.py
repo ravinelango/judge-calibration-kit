@@ -183,3 +183,116 @@ def render_human_agreement(
             f"_Note: n={summary.n} is small; treat kappa and the intervals as rough._",
         ]
     return "\n".join(lines) + "\n"
+
+
+def higher_kappa(a: CalibrationSummary, b: CalibrationSummary) -> str:
+    """'a', 'b' or 'tie' (point estimates only; see the CIs before calling it a win)."""
+    if a.kappa == b.kappa:
+        return "tie"
+    return "a" if a.kappa > b.kappa else "b"
+
+
+def _overlap(a: CalibrationSummary, b: CalibrationSummary) -> bool | None:
+    if a.kappa_ci is None or b.kappa_ci is None:
+        return None
+    return a.kappa_ci.low <= b.kappa_ci.high and b.kappa_ci.low <= a.kappa_ci.high
+
+
+def render_ab(
+    examples: Sequence[Example],
+    verdicts_a: Sequence[Verdict],
+    verdicts_b: Sequence[Verdict],
+    summary_a: CalibrationSummary,
+    summary_b: CalibrationSummary,
+    judge_a: str,
+    judge_b: str,
+    dataset_name: str,
+    synthetic: bool = False,
+) -> str:
+    """Side-by-side report for two judge configurations scored against the same human labels."""
+    winner = higher_kappa(summary_a, summary_b)
+    a_only = sum(
+        e.human_label == va.label != vb.label
+        for e, va, vb in zip(examples, verdicts_a, verdicts_b, strict=True)
+    )
+    b_only = sum(
+        e.human_label == vb.label != va.label
+        for e, va, vb in zip(examples, verdicts_a, verdicts_b, strict=True)
+    )
+    lines = [
+        "# Judge A/B comparison report",
+        "",
+        f"- Dataset: `{dataset_name}` ({summary_a.n} examples, same human labels for both)",
+        f"- Judge A: `{judge_a}`",
+        f"- Judge B: `{judge_b}`",
+        f"- Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
+    ]
+    if synthetic:
+        lines += [
+            "",
+            "> **Synthetic demo.** The dataset is synthetic and mock judges are keyword "
+            "heuristics, so these numbers only show the report format. They are not results.",
+        ]
+    lines += [
+        "",
+        "## Agreement with human labels",
+        "",
+        "| Metric | A | B |",
+        "|---|---|---|",
+        f"| Raw agreement | {_pct(summary_a.raw_agreement)} | {_pct(summary_b.raw_agreement)} |",
+        f"| Cohen's kappa | {summary_a.kappa:.3f} ({kappa_band(summary_a.kappa)}) | "
+        f"{summary_b.kappa:.3f} ({kappa_band(summary_b.kappa)}) |",
+        f"| Kappa 95% CI (bootstrap) | {_kci(summary_a)} | {_kci(summary_b)} |",
+        f"| Judge pass rate | {_ci(summary_a.judge_pass_rate)} | "
+        f"{_ci(summary_b.judge_pass_rate)} |",
+        f"| Too lenient (human fail, judge pass) | {summary_a.confusion['fail']['pass']} | "
+        f"{summary_b.confusion['fail']['pass']} |",
+        f"| Too strict (human pass, judge fail) | {summary_a.confusion['pass']['fail']} | "
+        f"{summary_b.confusion['pass']['fail']} |",
+        "",
+        "## Verdict",
+        "",
+    ]
+    if winner == "tie":
+        lines.append("- Both judges have the same kappa against human labels.")
+    else:
+        name = judge_a if winner == "a" else judge_b
+        lines.append(f"- Higher kappa: **{winner.upper()}** (`{name}`).")
+    lines.append(
+        f"- Items only A got right: {a_only}. Items only B got right: {b_only}."
+    )
+    overlap = _overlap(summary_a, summary_b)
+    if overlap:
+        lines.append(
+            "- The kappa intervals overlap, so this sample does not show a reliable "
+            "difference. Label more items before switching judges on this evidence alone."
+        )
+    lines += [
+        "",
+        "## Where A and B disagree",
+        "",
+    ]
+    rows = [
+        (e, va, vb)
+        for e, va, vb in zip(examples, verdicts_a, verdicts_b, strict=True)
+        if va.label != vb.label
+    ]
+    if not rows:
+        lines.append("None. A and B gave the same verdict on every example.")
+    else:
+        lines += [
+            "| id | human | A | B | closer to human | output |",
+            "|---|---|---|---|---|---|",
+        ]
+        for e, va, vb in rows:
+            closer = "A" if va.label == e.human_label else "B"
+            lines.append(
+                f"| {e.id} | {e.human_label} | {va.label} | {vb.label} | {closer} | "
+                f"{_cell(e.output)} |"
+            )
+    if summary_a.n < 50:
+        lines += [
+            "",
+            f"_Note: n={summary_a.n} is small; treat kappa and the intervals as rough._",
+        ]
+    return "\n".join(lines) + "\n"
