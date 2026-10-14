@@ -37,6 +37,19 @@ Human–human agreement (two label columns, no judge):
 jck agree --data examples/synthetic_two_raters.jsonl --col-a human_a --col-b human_b --synthetic --out reports/agree.md
 ```
 
+Judge A/B comparison (two judge configurations, same human labels):
+```bash
+jck ab --data examples/synthetic_support_answers.jsonl --judge-a mock --judge-b mock:strict --synthetic --out reports/ab.md
+```
+The report puts kappa, raw agreement and kappa CI side by side, says which judge has the
+higher kappa, warns when the intervals overlap, and lists every item where A and B
+disagree. See [`examples/sample_ab_report.md`](examples/sample_ab_report.md). To A/B two
+prompts on a real model, pass template files that use `{rubric}`, `{input}` and `{output}`:
+```bash
+jck ab --data my_labels.jsonl --judge-a openai:gpt-4o-mini --judge-b openai:gpt-4o-mini \
+  --prompt-b examples/prompts/strict_judge.txt --out reports/prompt_ab.md --json reports/prompt_ab.json
+```
+
 Using a real model (optional; keys read from the environment):
 ```bash
 pip install -e '.[openai]'      # or '.[anthropic]'
@@ -72,7 +85,7 @@ demonstrates the format only. **No real-model calibration results are published 
 - Run real judges against a hand-labeled set and publish the results with the raw data
 - Per-criterion calibration with multiple labels per example (v0.1 groups by each example's rubric)
 - ~~Human-to-human agreement baseline~~ (`jck agree`)
-- Judge prompt A/B comparison
+- ~~Judge prompt A/B comparison~~ (`jck ab`)
 
 ## License
 MIT © Ravin Elango
