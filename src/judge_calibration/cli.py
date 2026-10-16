@@ -1,4 +1,4 @@
-"""Command line entry point: jck run / jck agree / jck ab."""
+"""Command line entry point: jck run / agree / ab / sheet / import-sheet."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from .dataset import load_jsonl
 from .judges import get_judge, load_prompt_template
 from .metrics import CalibrationSummary, summarize
 from .report import higher_kappa, render, render_ab, render_human_agreement
+from .sheet import read_sheet, write_sheet
 
 
 def _cmd_run(args: argparse.Namespace) -> int:
@@ -163,6 +164,25 @@ def _cmd_ab(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_sheet(args: argparse.Namespace) -> int:
+    n = write_sheet(args.data, args.out, seed=args.seed)
+    print(f"wrote {args.out}  rows={n}  (labels blank; fill human_label with pass/fail)")
+    return 0
+
+
+def _cmd_import_sheet(args: argparse.Namespace) -> int:
+    try:
+        rows = read_sheet(args.sheet, allow_unlabeled=args.allow_unlabeled)
+    except ValueError as exc:
+        raise SystemExit(f"import-sheet: {exc}") from exc
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    with open(args.out, "w", encoding="utf-8") as fh:
+        for row in rows:
+            fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    print(f"wrote {args.out}  labeled={len(rows)}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="jck", description=__doc__)
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -210,6 +230,25 @@ def main(argv: list[str] | None = None) -> int:
     ab.add_argument("--json", type=Path, help="optional machine-readable summary")
     ab.add_argument("--synthetic", action="store_true", help="label the report as a demo")
     ab.set_defaults(func=_cmd_ab)
+
+    sheet = sub.add_parser(
+        "sheet",
+        help="write a blank CSV labeling sheet from a JSONL of outputs (labels hidden)",
+    )
+    sheet.add_argument("--data", required=True, type=Path, help="JSONL with input/output")
+    sheet.add_argument("--out", required=True, type=Path, help="CSV sheet path")
+    sheet.add_argument("--seed", type=int, help="shuffle row order with this seed")
+    sheet.set_defaults(func=_cmd_sheet)
+
+    imp = sub.add_parser("import-sheet", help="convert a filled CSV labeling sheet to JSONL")
+    imp.add_argument("--sheet", required=True, type=Path)
+    imp.add_argument("--out", required=True, type=Path, help="JSONL path for jck run/agree/ab")
+    imp.add_argument(
+        "--allow-unlabeled",
+        action="store_true",
+        help="drop blank rows instead of failing (for partial labeling passes)",
+    )
+    imp.set_defaults(func=_cmd_import_sheet)
 
     args = parser.parse_args(argv)
     return args.func(args)
