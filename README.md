@@ -59,7 +59,9 @@ jck run --data my_labels.jsonl --judge openai:gpt-4o-mini --out reports/openai.m
 
 ## Data format
 One JSON object per line: `input`, `output`, `human_label` (`pass`/`fail`), and optional
-`id` and `rubric`. Label with the [labeling guide](docs/labeling-guide.md).
+`id` and `rubric`. Label with the [labeling guide](docs/labeling-guide.md). To label in a
+spreadsheet, `jck sheet` writes a blank CSV and `jck import-sheet` turns the filled CSV back
+into JSONL.
 
 For `jck agree`, use two rater fields (default `human_a` / `human_b`; configurable via
 `--col-a` / `--col-b`). `human_label` is still accepted as the primary column.

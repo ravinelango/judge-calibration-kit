@@ -21,3 +21,5 @@ jobs:
         run: jck run --data examples/synthetic_support_answers.jsonl --judge mock --synthetic --out reports/demo.md
       - name: Smoke test judge A/B with the offline mocks
         run: jck ab --data examples/synthetic_support_answers.jsonl --judge-a mock --judge-b mock:strict --synthetic --out reports/ab.md
+      - name: Smoke test blank labeling sheet export
+        run: jck sheet --data examples/synthetic_support_answers.jsonl --out reports/sheet.csv --seed 1

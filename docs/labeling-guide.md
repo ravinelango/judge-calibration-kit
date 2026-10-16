@@ -26,6 +26,21 @@ so labels are consistent and the agreement numbers mean something.
 Start with about 50 to 100. The tool prints Wilson confidence intervals so you can see
 how wide the uncertainty still is; with 10 examples it is very wide.
 
+## Labeling in a spreadsheet
+Most domain experts would rather label in a spreadsheet than edit JSONL. Export a blank
+sheet from your unlabeled outputs, label it, then convert it back:
+
+```bash
+jck sheet --data outputs.jsonl --out labels.csv --seed 42
+# fill human_label (pass/fail) and fail_reason in Excel / Sheets, export as CSV
+jck import-sheet --sheet labels.csv --out my_labels.jsonl
+```
+
+`jck sheet` leaves out any existing label or judge fields so you label blind, and
+`--seed` shuffles the rows so you do not label in the order the outputs were generated.
+`jck import-sheet` fails if any row is still blank or has a label other than pass/fail;
+pass `--allow-unlabeled` to keep only the rows you have finished.
+
 ## JSONL format
 ```json
 {"id": "s01", "input": "...", "output": "...", "human_label": "pass", "rubric": "optional"}
