@@ -1,7 +1,7 @@
 # judge-calibration-kit
 
 [![CI](https://github.com/ravinelango/judge-calibration-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/ravinelango/judge-calibration-kit/actions/workflows/ci.yml)
-![status](https://img.shields.io/badge/status-early%20(v0.1)-orange)
+![status](https://img.shields.io/badge/status-early%20(v0.2)-orange)
 ![license](https://img.shields.io/badge/license-MIT-blue)
 
 **Before you trust an LLM-as-a-judge, measure how often it agrees with you.**
@@ -79,7 +79,7 @@ The judge interface is a small `Protocol`; add a provider by implementing
 `judge(example) -> Verdict`.
 
 ## Status
-**Early, v0.1.** The metrics, mock judge, report and CLI work and are tested. The bundled
+**Early, v0.2.** The metrics, mock judge, report and CLI work and are tested. The bundled
 dataset is **synthetic** and the mock judge is a keyword heuristic, so the sample report
 demonstrates the format only. **No real-model calibration results are published yet.**
 

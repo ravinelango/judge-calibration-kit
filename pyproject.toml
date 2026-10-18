@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "judge-calibration-kit"
-version = "0.1.0"
+version = "0.2.0"
 description = "Measure how well an LLM-as-a-judge agrees with human labels before you trust it."
 readme = "README.md"
 license = { text = "MIT" }
