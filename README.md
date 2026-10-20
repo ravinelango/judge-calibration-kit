@@ -63,6 +63,17 @@ One JSON object per line: `input`, `output`, `human_label` (`pass`/`fail`), and 
 spreadsheet, `jck sheet` writes a blank CSV and `jck import-sheet` turns the filled CSV back
 into JSONL.
 
+To label one output against several criteria, give the row a `criteria` list instead of
+`human_label`; each item has `name`, `label` and an optional `rubric` (defaults to the name):
+```json
+{"id": "m02", "input": "...", "output": "...", "criteria": [
+  {"name": "correct", "rubric": "Steps match the documented flow.", "label": "fail"},
+  {"name": "no_invented_policy", "rubric": "Must not promise policy terms that are not stated.", "label": "fail"}]}
+```
+Each criterion becomes its own judged row with id `m02/correct`, so the "By rubric criterion"
+table shows where the judge drifts. A `human_b` on a criterion item feeds `jck agree`. See
+[`examples/synthetic_multi_criteria.jsonl`](examples/synthetic_multi_criteria.jsonl).
+
 For `jck agree`, use two rater fields (default `human_a` / `human_b`; configurable via
 `--col-a` / `--col-b`). `human_label` is still accepted as the primary column.
 
@@ -85,7 +96,7 @@ demonstrates the format only. **No real-model calibration results are published 
 
 ## Roadmap
 - Run real judges against a hand-labeled set and publish the results with the raw data
-- Per-criterion calibration with multiple labels per example (v0.1 groups by each example's rubric)
+- ~~Per-criterion calibration with multiple labels per example~~ (`criteria` list per row)
 - ~~Human-to-human agreement baseline~~ (`jck agree`)
 - ~~Judge prompt A/B comparison~~ (`jck ab`)
 

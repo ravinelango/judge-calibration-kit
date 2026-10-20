@@ -19,6 +19,8 @@ jobs:
       - run: pytest -q
       - name: Smoke test CLI with the offline mock judge
         run: jck run --data examples/synthetic_support_answers.jsonl --judge mock --synthetic --out reports/demo.md
+      - name: Smoke test multi-criteria labels with the offline mock judge
+        run: jck run --data examples/synthetic_multi_criteria.jsonl --judge mock --synthetic --out reports/multi.md
       - name: Smoke test judge A/B with the offline mocks
         run: jck ab --data examples/synthetic_support_answers.jsonl --judge-a mock --judge-b mock:strict --synthetic --out reports/ab.md
       - name: Smoke test blank labeling sheet export
