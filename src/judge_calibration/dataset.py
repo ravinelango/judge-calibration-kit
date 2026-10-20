@@ -28,6 +28,44 @@ def _norm_label(value: object, line_no: int, field: str = "human_label") -> str:
     return label
 
 
+def _expand_criteria(
+    row: dict, line_no: int, label_b_field: str | None
+) -> list[Example]:
+    """Turn one row with a `criteria` list into one Example per criterion.
+
+    Each item needs `name` and `label`; `rubric` defaults to the name. The id becomes
+    `<row id>/<name>` so every criterion verdict can be traced back to its example.
+    """
+    items = row["criteria"]
+    if not isinstance(items, list) or not items:
+        raise ValueError(f"line {line_no}: criteria must be a non-empty list")
+    base_id = str(row.get("id", line_no))
+    seen: set[str] = set()
+    out: list[Example] = []
+    for idx, item in enumerate(items, start=1):
+        if not isinstance(item, dict) or "name" not in item or "label" not in item:
+            raise ValueError(f"line {line_no}: criteria[{idx}] needs 'name' and 'label'")
+        name = str(item["name"]).strip()
+        if not name or name in seen:
+            raise ValueError(f"line {line_no}: criteria[{idx}] name {name!r} is empty or repeated")
+        seen.add(name)
+        secondary = None
+        if label_b_field and label_b_field in item:
+            field = f"criteria[{idx}].{label_b_field}"
+            secondary = _norm_label(item[label_b_field], line_no, field)
+        out.append(
+            Example(
+                id=f"{base_id}/{name}",
+                input=str(row["input"]),
+                output=str(row["output"]),
+                human_label=_norm_label(item["label"], line_no, f"criteria[{idx}].label"),
+                rubric=str(item.get("rubric") or name),
+                human_b=secondary,
+            )
+        )
+    return out
+
+
 def load_jsonl(
     path: str | Path,
     *,
@@ -38,6 +76,9 @@ def load_jsonl(
 
     When `label_b_field` is set and present on a row, it is stored as `human_b` for
     human-to-human agreement (no judge required).
+
+    A row may instead carry `criteria`, a list of `{name, rubric, label}` items, to label
+    one output against several rubric criteria; it expands to one Example per criterion.
     """
     examples: list[Example] = []
     with open(path, encoding="utf-8") as fh:
@@ -52,6 +93,9 @@ def load_jsonl(
             for key in ("input", "output"):
                 if key not in row:
                     raise ValueError(f"line {line_no}: missing required field {key!r}")
+            if "criteria" in row:
+                examples.extend(_expand_criteria(row, line_no, label_b_field))
+                continue
 
             primary = None
             primary_field = None
