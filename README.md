@@ -73,6 +73,9 @@ To label one output against several criteria, give the row a `criteria` list ins
 Each criterion becomes its own judged row with id `m02/correct`, so the "By rubric criterion"
 table shows where the judge drifts. A `human_b` on a criterion item feeds `jck agree`. See
 [`examples/synthetic_multi_criteria.jsonl`](examples/synthetic_multi_criteria.jsonl).
+`jck sheet` writes these rows one per criterion too, with the criteria of one output next to
+each other (a seed shuffles outputs, not criteria), and `jck import-sheet` reads them back as
+plain rows with ids like `m02/correct`.
 
 For `jck agree`, use two rater fields (default `human_a` / `human_b`; configurable via
 `--col-a` / `--col-b`). `human_label` is still accepted as the primary column.

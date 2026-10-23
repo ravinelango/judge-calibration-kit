@@ -25,3 +25,5 @@ jobs:
         run: jck ab --data examples/synthetic_support_answers.jsonl --judge-a mock --judge-b mock:strict --synthetic --out reports/ab.md
       - name: Smoke test blank labeling sheet export
         run: jck sheet --data examples/synthetic_support_answers.jsonl --out reports/sheet.csv --seed 1
+      - name: Smoke test a per-criterion labeling sheet
+        run: jck sheet --data examples/synthetic_multi_criteria.jsonl --out reports/multi_sheet.csv --seed 1
