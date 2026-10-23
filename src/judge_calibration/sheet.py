@@ -2,7 +2,9 @@
 
 A spreadsheet is the easiest place for a domain expert to label. `write_sheet` drops any
 existing label or judge fields so the labeler works blind, optionally shuffles the row
-order with a fixed seed, and leaves `human_label` and `fail_reason` empty. `read_sheet`
+order with a fixed seed, and leaves `human_label` and `fail_reason` empty. A row with a
+`criteria` list becomes one sheet row per criterion (id `<id>/<name>`), kept next to each
+other so the labeler reads the output once and judges each criterion in turn. `read_sheet`
 turns the filled CSV back into the JSONL rows the other commands expect and refuses to
 silently skip rows that are still unlabeled.
 """
@@ -40,11 +42,38 @@ def _read_rows(path: str | Path) -> list[dict]:
     return rows
 
 
+def _sheet_rows(row: dict) -> list[dict]:
+    """One sheet row per criterion for `criteria` rows, otherwise the row itself."""
+    items = row.get("criteria")
+    if items is None:
+        return [{"id": row["id"], "rubric": row.get("rubric") or "", "input": row["input"],
+                 "output": row["output"]}]
+    if not isinstance(items, list) or not items:
+        raise ValueError(f"id {row['id']}: criteria must be a non-empty list")
+    out: list[dict] = []
+    seen: set[str] = set()
+    for idx, item in enumerate(items, start=1):
+        name = str(item.get("name", "")).strip() if isinstance(item, dict) else ""
+        if not name or name in seen:
+            raise ValueError(f"id {row['id']}: criteria[{idx}] name is missing or repeated")
+        seen.add(name)
+        out.append(
+            {
+                "id": f"{row['id']}/{name}",
+                "rubric": str(item.get("rubric") or name),
+                "input": row["input"],
+                "output": row["output"],
+            }
+        )
+    return out
+
+
 def write_sheet(src: str | Path, dest: str | Path, *, seed: int | None = None) -> int:
-    """Write a blank CSV labeling sheet from a JSONL of outputs. Returns the row count."""
+    """Write a blank CSV labeling sheet from a JSONL of outputs. Returns the sheet row count."""
     rows = _read_rows(src)
     if seed is not None:
         random.Random(seed).shuffle(rows)
+    rows = [sheet_row for row in rows for sheet_row in _sheet_rows(row)]
     dest = Path(dest)
     dest.parent.mkdir(parents=True, exist_ok=True)
     with open(dest, "w", encoding="utf-8", newline="") as fh:
@@ -54,7 +83,7 @@ def write_sheet(src: str | Path, dest: str | Path, *, seed: int | None = None) -
             writer.writerow(
                 {
                     "id": row["id"],
-                    "rubric": row.get("rubric") or "",
+                    "rubric": row["rubric"],
                     "input": row["input"],
                     "output": row["output"],
                     "human_label": "",

@@ -68,3 +68,30 @@ def test_bad_label_is_rejected(tmp_path):
     _fill(sheet, {first: "maybe"})
     with pytest.raises(ValueError, match="pass/fail"):
         read_sheet(sheet, allow_unlabeled=True)
+
+
+MULTI = Path(__file__).parents[1] / "examples" / "synthetic_multi_criteria.jsonl"
+
+
+def test_criteria_rows_become_one_sheet_row_per_criterion(tmp_path):
+    out = tmp_path / "sheet.csv"
+    n = write_sheet(MULTI, out, seed=3)
+    with open(out, encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    expected = load_jsonl(MULTI)
+    assert n == len(rows) == len(expected)
+    assert {r["id"] for r in rows} == {e.id for e in expected}
+    assert all(r["human_label"] == "" and r["rubric"] for r in rows)
+    # criteria of one output stay together so the labeler reads it once
+    bases = [r["id"].split("/")[0] for r in rows]
+    assert bases == sorted(bases, key=bases.index)
+
+
+def test_criteria_sheet_round_trips_through_import(tmp_path):
+    out = tmp_path / "sheet.csv"
+    write_sheet(MULTI, out)
+    truth = {e.id: e.human_label for e in load_jsonl(MULTI)}
+    _fill(out, truth)
+    back = read_sheet(out)
+    assert {r["id"]: r["human_label"] for r in back} == truth
+    assert all("/" in r["id"] and r["rubric"] for r in back)
