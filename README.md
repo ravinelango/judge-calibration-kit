@@ -57,6 +57,13 @@ export OPENAI_API_KEY=...
 jck run --data my_labels.jsonl --judge openai:gpt-4o-mini --out reports/openai.md --json reports/openai.json
 ```
 
+### Exit codes
+`jck` exits `0` on success. It exits `2` on a usage problem: a bad or missing flag, or a
+`--data`/`--sheet`/`--prompt` path that does not exist (printed as
+`jck <cmd>: no such file: <path>`). It exits `1` when the input is readable but not usable,
+for example `jck agree` rows missing the second rater column or an `import-sheet` CSV with
+blank or invalid labels. Scripts can treat `2` as "fix the command" and `1` as "fix the data".
+
 ## Data format
 One JSON object per line: `input`, `output`, `human_label` (`pass`/`fail`), and optional
 `id` and `rubric`. Label with the [labeling guide](docs/labeling-guide.md). To label in a
