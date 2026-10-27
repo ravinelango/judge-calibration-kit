@@ -251,7 +251,12 @@ def main(argv: list[str] | None = None) -> int:
     imp.set_defaults(func=_cmd_import_sheet)
 
     args = parser.parse_args(argv)
-    return args.func(args)
+    try:
+        return args.func(args)
+    except FileNotFoundError as exc:
+        # A mistyped --data/--sheet/--prompt path is a usage error, not a crash.
+        print(f"jck {args.cmd}: no such file: {exc.filename}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":
