@@ -63,6 +63,7 @@ jck run --data my_labels.jsonl --judge openai:gpt-4o-mini --out reports/openai.m
 `jck <cmd>: no such file: <path>`). It exits `1` when the input is readable but not usable,
 for example `jck agree` rows missing the second rater column or an `import-sheet` CSV with
 blank or invalid labels. Scripts can treat `2` as "fix the command" and `1` as "fix the data".
+`jck --version` prints the installed version, which is worth recording next to a saved report.
 
 ## Data format
 One JSON object per line: `input`, `output`, `human_label` (`pass`/`fail`), and optional
