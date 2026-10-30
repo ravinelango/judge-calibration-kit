@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 
+from . import __version__
 from .dataset import load_jsonl
 from .judges import get_judge, load_prompt_template
 from .metrics import CalibrationSummary, summarize
@@ -185,6 +186,7 @@ def _cmd_import_sheet(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="jck", description=__doc__)
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     run = sub.add_parser("run", help="judge a labeled dataset and write a report")

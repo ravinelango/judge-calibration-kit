@@ -1,6 +1,9 @@
 import json
 from pathlib import Path
 
+import pytest
+
+from judge_calibration import __version__
 from judge_calibration.cli import main
 
 EXAMPLE = Path(__file__).parents[1] / "examples" / "synthetic_support_answers.jsonl"
@@ -30,3 +33,10 @@ def test_missing_input_file_is_a_usage_error(tmp_path, capsys):
     assert main(["import-sheet", "--sheet", str(sheet), "--out", str(out)]) == 2
     assert "jck import-sheet: no such file:" in capsys.readouterr().err
     assert not out.exists()
+
+
+def test_version_flag_prints_package_version(capsys):
+    with pytest.raises(SystemExit) as exc:
+        main(["--version"])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out.strip() == f"jck {__version__}"
