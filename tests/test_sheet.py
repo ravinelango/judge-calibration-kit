@@ -95,3 +95,20 @@ def test_criteria_sheet_round_trips_through_import(tmp_path):
     back = read_sheet(out)
     assert {r["id"]: r["human_label"] for r in back} == truth
     assert all("/" in r["id"] and r["rubric"] for r in back)
+
+
+def test_duplicate_sheet_id_is_rejected(tmp_path):
+    out = tmp_path / "sheet.csv"
+    write_sheet(EXAMPLE, out)
+    with open(out, encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+        fields = list(rows[0].keys())
+    for row in rows:
+        row["human_label"] = "pass"
+    rows.append(dict(rows[0]))
+    with open(out, "w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(rows)
+    with pytest.raises(ValueError, match="duplicate id"):
+        read_sheet(out)

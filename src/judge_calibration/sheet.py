@@ -97,17 +97,25 @@ def write_sheet(src: str | Path, dest: str | Path, *, seed: int | None = None) -
 def read_sheet(path: str | Path, *, allow_unlabeled: bool = False) -> list[dict]:
     """Read a filled CSV sheet into JSONL-ready dicts.
 
-    Raises if any label is not pass/fail, or if rows are unlabeled and
+    Raises if any label is not pass/fail, if an id appears twice, or if rows are unlabeled and
     `allow_unlabeled` is False. With `allow_unlabeled`, blank rows are dropped.
     """
     out: list[dict] = []
     unlabeled: list[str] = []
+    seen_ids: dict[str, int] = {}
     with open(path, encoding="utf-8", newline="") as fh:
         reader = csv.DictReader(fh)
         missing = {"id", "input", "output", "human_label"} - set(reader.fieldnames or [])
         if missing:
             raise ValueError(f"{path}: sheet is missing columns {sorted(missing)}")
         for row_no, row in enumerate(reader, start=2):
+            row_id = (row.get("id") or "").strip()
+            if row_id in seen_ids:
+                raise ValueError(
+                    f"row {row_no}: duplicate id {row_id!r} (first seen on row "
+                    f"{seen_ids[row_id]}); a pasted or repeated row would count twice"
+                )
+            seen_ids[row_id] = row_no
             label = (row.get("human_label") or "").strip().lower()
             if not label:
                 unlabeled.append(row["id"])
