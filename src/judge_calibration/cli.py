@@ -15,6 +15,12 @@ from .report import higher_kappa, render, render_ab, render_human_agreement
 from .sheet import read_sheet, write_sheet
 
 
+def _write_json(path: Path, payload: dict) -> None:
+    """Write a --json summary, creating parent folders like --out does."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
 def _cmd_run(args: argparse.Namespace) -> int:
     examples = load_jsonl(args.data)
     judge = get_judge(args.judge)
@@ -29,22 +35,20 @@ def _cmd_run(args: argparse.Namespace) -> int:
     else:
         sys.stdout.write(md)
     if args.json:
-        args.json.write_text(
-            json.dumps(
-                {
-                    "mode": "judge",
-                    "judge": judge.name,
-                    "n": summary.n,
-                    "raw_agreement": summary.raw_agreement,
-                    "kappa": summary.kappa,
-                    "kappa_ci_95": (
-                        [summary.kappa_ci.low, summary.kappa_ci.high] if summary.kappa_ci else None
-                    ),
-                    "confusion": summary.confusion,
-                    "synthetic": args.synthetic,
-                },
-                indent=2,
-            )
+        _write_json(
+            args.json,
+            {
+                "mode": "judge",
+                "judge": judge.name,
+                "n": summary.n,
+                "raw_agreement": summary.raw_agreement,
+                "kappa": summary.kappa,
+                "kappa_ci_95": (
+                    [summary.kappa_ci.low, summary.kappa_ci.high] if summary.kappa_ci else None
+                ),
+                "confusion": summary.confusion,
+                "synthetic": args.synthetic,
+            },
         )
     return 0
 
@@ -84,23 +88,21 @@ def _cmd_agree(args: argparse.Namespace) -> int:
     else:
         sys.stdout.write(md)
     if args.json:
-        args.json.write_text(
-            json.dumps(
-                {
-                    "mode": "human_human",
-                    "rater_a": args.col_a,
-                    "rater_b": args.col_b,
-                    "n": summary.n,
-                    "raw_agreement": summary.raw_agreement,
-                    "kappa": summary.kappa,
-                    "kappa_ci_95": (
-                        [summary.kappa_ci.low, summary.kappa_ci.high] if summary.kappa_ci else None
-                    ),
-                    "confusion": summary.confusion,
-                    "synthetic": args.synthetic,
-                },
-                indent=2,
-            )
+        _write_json(
+            args.json,
+            {
+                "mode": "human_human",
+                "rater_a": args.col_a,
+                "rater_b": args.col_b,
+                "n": summary.n,
+                "raw_agreement": summary.raw_agreement,
+                "kappa": summary.kappa,
+                "kappa_ci_95": (
+                    [summary.kappa_ci.low, summary.kappa_ci.high] if summary.kappa_ci else None
+                ),
+                "confusion": summary.confusion,
+                "synthetic": args.synthetic,
+            },
         )
     return 0
 
@@ -144,23 +146,21 @@ def _cmd_ab(args: argparse.Namespace) -> int:
     else:
         sys.stdout.write(md)
     if args.json:
-        args.json.write_text(
-            json.dumps(
-                {
-                    "mode": "ab",
-                    "judge_a": name_a,
-                    "judge_b": name_b,
-                    "n": sum_a.n,
-                    "a": _summary_json(sum_a),
-                    "b": _summary_json(sum_b),
-                    "higher_kappa": winner,
-                    "a_b_disagreements": sum(
-                        va.label != vb.label for va, vb in zip(verdicts_a, verdicts_b, strict=True)
-                    ),
-                    "synthetic": args.synthetic,
-                },
-                indent=2,
-            )
+        _write_json(
+            args.json,
+            {
+                "mode": "ab",
+                "judge_a": name_a,
+                "judge_b": name_b,
+                "n": sum_a.n,
+                "a": _summary_json(sum_a),
+                "b": _summary_json(sum_b),
+                "higher_kappa": winner,
+                "a_b_disagreements": sum(
+                    va.label != vb.label for va, vb in zip(verdicts_a, verdicts_b, strict=True)
+                ),
+                "synthetic": args.synthetic,
+            },
         )
     return 0
 

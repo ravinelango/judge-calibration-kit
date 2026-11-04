@@ -21,6 +21,14 @@ def test_cli_end_to_end_with_mock(tmp_path):
     assert data["n"] == 10 and data["synthetic"] is True
 
 
+def test_json_summary_creates_missing_parent_folder(tmp_path):
+    js = tmp_path / "reports" / "nightly" / "r.json"
+    rc = main(["run", "--data", str(EXAMPLE), "--out", str(tmp_path / "r.md"), "--json", str(js)])
+    assert rc == 0
+    text = js.read_text()
+    assert text.endswith("\n") and json.loads(text)["mode"] == "judge"
+
+
 def test_missing_input_file_is_a_usage_error(tmp_path, capsys):
     missing = tmp_path / "nope.jsonl"
     assert main(["run", "--data", str(missing)]) == 2
