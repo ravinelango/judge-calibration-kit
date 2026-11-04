@@ -28,9 +28,7 @@ def _norm_label(value: object, line_no: int, field: str = "human_label") -> str:
     return label
 
 
-def _expand_criteria(
-    row: dict, line_no: int, label_b_field: str | None
-) -> list[Example]:
+def _expand_criteria(row: dict, line_no: int, label_b_field: str | None) -> list[Example]:
     """Turn one row with a `criteria` list into one Example per criterion.
 
     Each item needs `name` and `label`; `rubric` defaults to the name. The id becomes

@@ -46,8 +46,22 @@ def test_mock_rejects_prompt_template():
 
 def test_cli_ab_end_to_end_mock_vs_strict(tmp_path):
     out, js = tmp_path / "ab.md", tmp_path / "ab.json"
-    rc = main(["ab", "--data", str(EXAMPLE), "--judge-a", "mock", "--judge-b", "mock:strict",
-               "--out", str(out), "--json", str(js), "--synthetic"])
+    rc = main(
+        [
+            "ab",
+            "--data",
+            str(EXAMPLE),
+            "--judge-a",
+            "mock",
+            "--judge-b",
+            "mock:strict",
+            "--out",
+            str(out),
+            "--json",
+            str(js),
+            "--synthetic",
+        ]
+    )
     assert rc == 0
     md = out.read_text()
     assert "# Judge A/B comparison report" in md and "Synthetic demo" in md
@@ -62,8 +76,19 @@ def test_cli_ab_end_to_end_mock_vs_strict(tmp_path):
 
 def test_cli_ab_same_judge_is_a_tie(tmp_path):
     js = tmp_path / "ab.json"
-    main(["ab", "--data", str(EXAMPLE), "--judge-b", "mock", "--out", str(tmp_path / "ab.md"),
-          "--json", str(js)])
+    main(
+        [
+            "ab",
+            "--data",
+            str(EXAMPLE),
+            "--judge-b",
+            "mock",
+            "--out",
+            str(tmp_path / "ab.md"),
+            "--json",
+            str(js),
+        ]
+    )
     data = json.loads(js.read_text())
     assert data["higher_kappa"] == "tie" and data["a_b_disagreements"] == 0
     assert "None. A and B gave the same verdict" in (tmp_path / "ab.md").read_text()

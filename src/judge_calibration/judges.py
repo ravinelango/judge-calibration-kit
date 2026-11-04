@@ -75,7 +75,12 @@ class MockJudge:
 
     name = "mock"
     FAIL_MARKERS: tuple[str, ...] = (
-        "i don't know", "i cannot", "guaranteed", "always", "never", "100%",
+        "i don't know",
+        "i cannot",
+        "guaranteed",
+        "always",
+        "never",
+        "100%",
     )
     MIN_WORDS = 4
 
@@ -119,9 +124,7 @@ class OpenAIJudge:
 
 
 class AnthropicJudge:
-    def __init__(
-        self, model: str = "claude-3-5-haiku-latest", prompt_template: str | None = None
-    ):
+    def __init__(self, model: str = "claude-3-5-haiku-latest", prompt_template: str | None = None):
         import anthropic  # optional dependency
 
         if not os.environ.get("ANTHROPIC_API_KEY"):

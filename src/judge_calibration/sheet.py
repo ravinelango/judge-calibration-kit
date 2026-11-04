@@ -46,8 +46,14 @@ def _sheet_rows(row: dict) -> list[dict]:
     """One sheet row per criterion for `criteria` rows, otherwise the row itself."""
     items = row.get("criteria")
     if items is None:
-        return [{"id": row["id"], "rubric": row.get("rubric") or "", "input": row["input"],
-                 "output": row["output"]}]
+        return [
+            {
+                "id": row["id"],
+                "rubric": row.get("rubric") or "",
+                "input": row["input"],
+                "output": row["output"],
+            }
+        ]
     if not isinstance(items, list) or not items:
         raise ValueError(f"id {row['id']}: criteria must be a non-empty list")
     out: list[dict] = []

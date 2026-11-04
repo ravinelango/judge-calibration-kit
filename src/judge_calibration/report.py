@@ -258,9 +258,7 @@ def render_ab(
     else:
         name = judge_a if winner == "a" else judge_b
         lines.append(f"- Higher kappa: **{winner.upper()}** (`{name}`).")
-    lines.append(
-        f"- Items only A got right: {a_only}. Items only B got right: {b_only}."
-    )
+    lines.append(f"- Items only A got right: {a_only}. Items only B got right: {b_only}.")
     overlap = _overlap(summary_a, summary_b)
     if overlap:
         lines.append(

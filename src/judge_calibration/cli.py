@@ -63,8 +63,7 @@ def _cmd_agree(args: argparse.Namespace) -> int:
     if missing:
         raise SystemExit(
             f"human-to-human mode needs both '{args.col_a}' and '{args.col_b}' on every row; "
-            f"missing {args.col_b} on: {', '.join(missing[:5])}"
-            + ("…" if len(missing) > 5 else "")
+            f"missing {args.col_b} on: {', '.join(missing[:5])}" + ("…" if len(missing) > 5 else "")
         )
     summary = summarize(
         [e.human_label for e in examples],
@@ -132,17 +131,21 @@ def _cmd_ab(args: argparse.Namespace) -> int:
         sides[side] = (label, verdicts, summarize(human, [v.label for v in verdicts]))
     (name_a, verdicts_a, sum_a), (name_b, verdicts_b, sum_b) = sides["a"], sides["b"]
     md = render_ab(
-        examples, verdicts_a, verdicts_b, sum_a, sum_b, name_a, name_b, args.data.name,
+        examples,
+        verdicts_a,
+        verdicts_b,
+        sum_a,
+        sum_b,
+        name_a,
+        name_b,
+        args.data.name,
         args.synthetic,
     )
     winner = higher_kappa(sum_a, sum_b)
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(md, encoding="utf-8")
-        print(
-            f"wrote {args.out}  kappa A={sum_a.kappa:.3f}  B={sum_b.kappa:.3f}  "
-            f"higher={winner}"
-        )
+        print(f"wrote {args.out}  kappa A={sum_a.kappa:.3f}  B={sum_b.kappa:.3f}  higher={winner}")
     else:
         sys.stdout.write(md)
     if args.json:
