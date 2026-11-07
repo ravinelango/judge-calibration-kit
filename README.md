@@ -50,6 +50,15 @@ jck ab --data my_labels.jsonl --judge-a openai:gpt-4o-mini --judge-b openai:gpt-
   --prompt-b examples/prompts/strict_judge.txt --out reports/prompt_ab.md --json reports/prompt_ab.json
 ```
 
+Export only the disagreements (JSONL, optional CSV) for triage — same mock/real judge as `jck run`:
+```bash
+jck disagreements --data examples/synthetic_support_answers.jsonl --judge mock --synthetic \
+  --out reports/disagreements.jsonl --csv reports/disagreements.csv
+```
+Each row has `id`, `input`, `output`, `human`, `judge`, `criterion`, `reason`, and `direction`
+(`too_lenient` or `too_strict`). With `--synthetic`, every row is labeled so demo exports are
+never mistaken for real calibration results.
+
 Using a real model (optional; keys read from the environment):
 ```bash
 pip install -e '.[openai]'      # or '.[anthropic]'
@@ -58,9 +67,9 @@ jck run --data my_labels.jsonl --judge openai:gpt-4o-mini --out reports/openai.m
 ```
 
 ### Exit codes
-`jck` exits `0` on success. It exits `2` on a usage problem: a bad or missing flag, or a
-`--data`/`--sheet`/`--prompt` path that does not exist (printed as
-`jck <cmd>: no such file: <path>`). It exits `1` when the input is readable but not usable,
+`jck` exits `0` on success. It exits `2` on a usage problem: a bad or missing flag, a
+`disagreements` call with neither `--out` nor `--csv`, or a `--data`/`--sheet`/`--prompt`
+path that does not exist (printed as `jck <cmd>: no such file: <path>`). It exits `1` when the input is readable but not usable,
 for example `jck agree` rows missing the second rater column or an `import-sheet` CSV with
 blank or invalid labels or a repeated `id` (a pasted row would otherwise count twice). Scripts can treat `2` as "fix the command" and `1` as "fix the data".
 `jck --version` prints the installed version, which is worth recording next to a saved report.
