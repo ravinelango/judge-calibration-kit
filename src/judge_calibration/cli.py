@@ -1,4 +1,4 @@
-"""Command line entry point: jck run / agree / ab / sheet / import-sheet."""
+"""Command line entry point: jck run / agree / ab / disagreements / sheet / import-sheet."""
 
 from __future__ import annotations
 
@@ -11,7 +11,14 @@ from . import __version__
 from .dataset import load_jsonl
 from .judges import get_judge, load_prompt_template
 from .metrics import CalibrationSummary, summarize
-from .report import higher_kappa, render, render_ab, render_human_agreement
+from .report import (
+    higher_kappa,
+    render,
+    render_ab,
+    render_human_agreement,
+    write_disagreements_csv,
+    write_disagreements_jsonl,
+)
 from .sheet import read_sheet, write_sheet
 
 
@@ -168,6 +175,23 @@ def _cmd_ab(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_disagreements(args: argparse.Namespace) -> int:
+    """Export examples where the judge label differs from the human label."""
+    if not args.out and not args.csv:
+        print("jck disagreements: pass --out (JSONL) and/or --csv", file=sys.stderr)
+        return 2
+    examples = load_jsonl(args.data)
+    judge = get_judge(args.judge)
+    verdicts = [judge.judge(e) for e in examples]
+    if args.out:
+        n_jsonl = write_disagreements_jsonl(examples, verdicts, args.out, synthetic=args.synthetic)
+        print(f"wrote {args.out}  disagreements={n_jsonl}")
+    if args.csv:
+        n_csv = write_disagreements_csv(examples, verdicts, args.csv, synthetic=args.synthetic)
+        print(f"wrote {args.csv}  disagreements={n_csv}")
+    return 0
+
+
 def _cmd_sheet(args: argparse.Namespace) -> int:
     n = write_sheet(args.data, args.out, seed=args.seed)
     print(f"wrote {args.out}  rows={n}  (labels blank; fill human_label with pass/fail)")
@@ -235,6 +259,21 @@ def main(argv: list[str] | None = None) -> int:
     ab.add_argument("--json", type=Path, help="optional machine-readable summary")
     ab.add_argument("--synthetic", action="store_true", help="label the report as a demo")
     ab.set_defaults(func=_cmd_ab)
+
+    dis = sub.add_parser(
+        "disagreements",
+        help="export JSONL/CSV of examples where the judge label differs from the human label",
+    )
+    dis.add_argument("--data", required=True, type=Path)
+    dis.add_argument("--judge", default="mock", help="mock | openai[:model] | anthropic[:model]")
+    dis.add_argument("--out", type=Path, help="JSONL path (one object per disagreement)")
+    dis.add_argument("--csv", type=Path, help="optional CSV path with the same rows")
+    dis.add_argument(
+        "--synthetic",
+        action="store_true",
+        help="mark each exported row as a synthetic demo (not a real result)",
+    )
+    dis.set_defaults(func=_cmd_disagreements)
 
     sheet = sub.add_parser(
         "sheet",

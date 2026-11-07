@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import csv
+import json
 from collections.abc import Sequence
 from datetime import datetime, timezone
+from pathlib import Path
 
 from .dataset import Example
 from .judges import DEFAULT_RUBRIC, Verdict
@@ -294,3 +297,70 @@ def render_ab(
             f"_Note: n={summary_a.n} is small; treat kappa and the intervals as rough._",
         ]
     return "\n".join(lines) + "\n"
+
+
+def disagreement_rows(
+    examples: Sequence[Example],
+    verdicts: Sequence[Verdict],
+    *,
+    synthetic: bool = False,
+) -> list[dict]:
+    """Rows where the judge label differs from the human label (for triage export)."""
+    rows: list[dict] = []
+    for e, v in zip(examples, verdicts, strict=True):
+        if e.human_label == v.label:
+            continue
+        direction = "too_lenient" if e.human_label == "fail" else "too_strict"
+        row = {
+            "id": e.id,
+            "input": e.input,
+            "output": e.output,
+            "human": e.human_label,
+            "judge": v.label,
+            "criterion": e.rubric or DEFAULT_RUBRIC,
+            "reason": v.reason,
+            "direction": direction,
+        }
+        if synthetic:
+            row["synthetic"] = True
+        rows.append(row)
+    return rows
+
+
+def write_disagreements_jsonl(
+    examples: Sequence[Example],
+    verdicts: Sequence[Verdict],
+    path: str | Path,
+    *,
+    synthetic: bool = False,
+) -> int:
+    """Write one JSON object per disagreement. Returns the row count."""
+    rows = disagreement_rows(examples, verdicts, synthetic=synthetic)
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("w", encoding="utf-8") as fh:
+        for row in rows:
+            fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return len(rows)
+
+
+def write_disagreements_csv(
+    examples: Sequence[Example],
+    verdicts: Sequence[Verdict],
+    path: str | Path,
+    *,
+    synthetic: bool = False,
+) -> int:
+    """Write a CSV of disagreements (header always present). Returns the row count."""
+    rows = disagreement_rows(examples, verdicts, synthetic=synthetic)
+    fieldnames = ["id", "input", "output", "human", "judge", "criterion", "reason", "direction"]
+    if synthetic:
+        fieldnames.append("synthetic")
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+    return len(rows)
