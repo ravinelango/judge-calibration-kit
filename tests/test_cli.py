@@ -60,3 +60,20 @@ def test_version_flag_prints_package_version(capsys):
         main(["--version"])
     assert exc.value.code == 0
     assert capsys.readouterr().out.strip() == f"jck {__version__}"
+
+
+def test_run_min_kappa_gate_exit_codes(tmp_path, capsys):
+    base = ["run", "--data", str(EXAMPLE), "--out", str(tmp_path / "r.md")]
+    js = tmp_path / "r.json"
+    assert main([*base, "--json", str(js)]) == 0
+    kappa = json.loads(js.read_text())["kappa"]
+    assert main([*base, "--min-kappa", str(max(-1.0, kappa - 0.01))]) == 0
+    if kappa < 0.99:
+        assert main([*base, "--min-kappa", str(min(1.0, kappa + 0.01))]) == 1
+        assert "below --min-kappa" in capsys.readouterr().err
+
+
+def test_run_min_kappa_rejects_out_of_range():
+    with pytest.raises(SystemExit) as exc:
+        main(["run", "--data", str(EXAMPLE), "--min-kappa", "1.5"])
+    assert exc.value.code == 2

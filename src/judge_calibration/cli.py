@@ -55,9 +55,27 @@ def _cmd_run(args: argparse.Namespace) -> int:
                 ),
                 "confusion": summary.confusion,
                 "synthetic": args.synthetic,
+                "min_kappa": args.min_kappa,
             },
         )
+    if args.min_kappa is not None and summary.kappa < args.min_kappa:
+        print(
+            f"jck run: kappa {summary.kappa:.3f} is below --min-kappa {args.min_kappa}",
+            file=sys.stderr,
+        )
+        return 1
     return 0
+
+
+def _kappa_floor(value: str) -> float:
+    """argparse type for --min-kappa: a number in [-1, 1]."""
+    try:
+        f = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"not a number: {value!r}") from exc
+    if not -1.0 <= f <= 1.0:
+        raise argparse.ArgumentTypeError(f"must be between -1 and 1, got {f}")
+    return f
 
 
 def _cmd_agree(args: argparse.Namespace) -> int:
@@ -222,6 +240,11 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--out", type=Path, help="markdown report path (default: stdout)")
     run.add_argument("--json", type=Path, help="optional machine-readable summary")
     run.add_argument("--synthetic", action="store_true", help="label the report as a demo")
+    run.add_argument(
+        "--min-kappa",
+        type=_kappa_floor,
+        help="exit 1 when judge-vs-human kappa is below this floor (for CI gates)",
+    )
     run.set_defaults(func=_cmd_run)
 
     agree = sub.add_parser(
