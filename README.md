@@ -72,6 +72,9 @@ jck run --data my_labels.jsonl --judge openai:gpt-4o-mini --out reports/openai.m
 path that does not exist (printed as `jck <cmd>: no such file: <path>`). It exits `1` when the input is readable but not usable,
 for example `jck agree` rows missing the second rater column or an `import-sheet` CSV with
 blank or invalid labels or a repeated `id` (a pasted row would otherwise count twice). Scripts can treat `2` as "fix the command" and `1` as "fix the data".
+`jck run --min-kappa 0.6` also exits `1` when the judge's kappa against the human labels is
+below the floor, so a judge or prompt change can gate CI; the value must be between -1 and 1.
+Pick the floor from your own labeled data, not from the synthetic demo.
 `jck --version` prints the installed version, which is worth recording next to a saved report.
 
 ## Data format
