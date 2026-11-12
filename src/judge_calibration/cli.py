@@ -324,6 +324,11 @@ def main(argv: list[str] | None = None) -> int:
         # A mistyped --data/--sheet/--prompt path is a usage error, not a crash.
         print(f"jck {args.cmd}: no such file: {exc.filename}", file=sys.stderr)
         return 2
+    except ValueError as exc:
+        # Readable but unusable input (blank or non pass/fail labels, malformed JSONL, bad
+        # prompt template) is a data error: one line with the line number, not a traceback.
+        print(f"jck {args.cmd}: {exc}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

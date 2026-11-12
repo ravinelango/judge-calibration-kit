@@ -55,6 +55,19 @@ def test_missing_input_file_is_a_usage_error(tmp_path, capsys):
     assert not out.exists()
 
 
+def test_blank_label_is_a_data_error_not_a_traceback(tmp_path, capsys):
+    data = tmp_path / "sheet.jsonl"
+    data.write_text(
+        '{"id": "s1", "input": "q", "output": "a", "human_label": "pass"}\n'
+        '{"id": "s2", "input": "q", "output": "a", "human_label": ""}\n',
+        encoding="utf-8",
+    )
+    assert main(["run", "--data", str(data)]) == 1
+    err = capsys.readouterr().err
+    assert err.startswith("jck run: line 2:")
+    assert "Traceback" not in err
+
+
 def test_version_flag_prints_package_version(capsys):
     with pytest.raises(SystemExit) as exc:
         main(["--version"])
