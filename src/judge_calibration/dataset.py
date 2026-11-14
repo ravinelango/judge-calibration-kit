@@ -79,6 +79,18 @@ def load_jsonl(
     one output against several rubric criteria; it expands to one Example per criterion.
     """
     examples: list[Example] = []
+    first_line: dict[str, int] = {}
+
+    def _add(example: Example, line_no: int) -> None:
+        # A repeated id usually means a pasted or duplicated row, which would count twice.
+        if example.id in first_line:
+            raise ValueError(
+                f"line {line_no}: duplicate id {example.id!r} (first seen on line "
+                f"{first_line[example.id]})"
+            )
+        first_line[example.id] = line_no
+        examples.append(example)
+
     with open(path, encoding="utf-8") as fh:
         for line_no, raw in enumerate(fh, start=1):
             raw = raw.strip()
@@ -92,7 +104,8 @@ def load_jsonl(
                 if key not in row:
                     raise ValueError(f"line {line_no}: missing required field {key!r}")
             if "criteria" in row:
-                examples.extend(_expand_criteria(row, line_no, label_b_field))
+                for example in _expand_criteria(row, line_no, label_b_field):
+                    _add(example, line_no)
                 continue
 
             primary = None
@@ -112,7 +125,7 @@ def load_jsonl(
             if label_b_field and label_b_field in row:
                 secondary = _norm_label(row[label_b_field], line_no, label_b_field)
 
-            examples.append(
+            _add(
                 Example(
                     id=str(row.get("id", line_no)),
                     input=str(row["input"]),
@@ -120,7 +133,8 @@ def load_jsonl(
                     human_label=_norm_label(primary, line_no, primary_field or "human_label"),
                     rubric=row.get("rubric"),
                     human_b=secondary,
-                )
+                ),
+                line_no,
             )
     if not examples:
         raise ValueError(f"{path}: no examples found")

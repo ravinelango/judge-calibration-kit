@@ -59,3 +59,25 @@ def test_rejects_bad_criteria(tmp_path, criteria, msg):
     p.write_text('{"input": "q", "output": "o", "criteria": ' + criteria + "}\n")
     with pytest.raises(ValueError, match=msg):
         load_jsonl(p)
+
+
+def test_rejects_duplicate_id_with_both_line_numbers(tmp_path):
+    p = tmp_path / "d.jsonl"
+    p.write_text(
+        '{"id": "a", "input": "q", "output": "x", "human_label": "pass"}\n'
+        '{"id": "b", "input": "q", "output": "y", "human_label": "fail"}\n'
+        '{"id": "a", "input": "q", "output": "x", "human_label": "pass"}\n'
+    )
+    with pytest.raises(ValueError, match=r"line 3: duplicate id 'a' \(first seen on line 1\)"):
+        load_jsonl(p)
+
+
+def test_rejects_repeated_criteria_row(tmp_path):
+    row = (
+        '{"id": "m1", "input": "q", "output": "o",'
+        ' "criteria": [{"name": "tone", "label": "pass"}]}\n'
+    )
+    p = tmp_path / "d.jsonl"
+    p.write_text(row + row)
+    with pytest.raises(ValueError, match="line 2: duplicate id 'm1/tone'"):
+        load_jsonl(p)
