@@ -77,6 +77,8 @@ with a blank or non pass/fail label, a malformed line or a repeated `id` also ex
 `jck run --min-kappa 0.6` also exits `1` when the judge's kappa against the human labels is
 below the floor, so a judge or prompt change can gate CI; the value must be between -1 and 1.
 Pick the floor from your own labeled data, not from the synthetic demo.
+`jck agree --min-kappa` does the same for two human raters, so a labeling pass whose raters
+disagree too much fails before its labels are used to judge a judge.
 `jck --version` prints the installed version, which is worth recording next to a saved report.
 
 ## Data format
