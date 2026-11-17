@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
+
+import pytest
 
 from judge_calibration.cli import main
 from judge_calibration.dataset import load_jsonl
@@ -66,3 +69,20 @@ def test_agree_cli_and_report(tmp_path: Path) -> None:
     assert "Disagreements" in md
     # s04 and s07 disagree in the synthetic file
     assert "s04" in md and "s07" in md
+
+
+def test_agree_min_kappa_gate_exit_codes(tmp_path: Path, capsys) -> None:
+    data = Path(__file__).resolve().parents[1] / "examples" / "synthetic_two_raters.jsonl"
+    js = tmp_path / "agree.json"
+    base = ["agree", "--data", str(data), "--out", str(tmp_path / "a.md")]
+    assert main([*base, "--json", str(js)]) == 0
+    payload = json.loads(js.read_text(encoding="utf-8"))
+    kappa = payload["kappa"]
+    assert payload["min_kappa"] is None
+    assert main([*base, "--min-kappa", str(max(-1.0, kappa - 0.01))]) == 0
+    assert kappa < 0.99  # the synthetic file has two rater disagreements
+    assert main([*base, "--min-kappa", str(min(1.0, kappa + 0.01))]) == 1
+    assert "below --min-kappa" in capsys.readouterr().err
+    with pytest.raises(SystemExit) as exc:
+        main([*base, "--min-kappa", "-2"])
+    assert exc.value.code == 2

@@ -126,8 +126,16 @@ def _cmd_agree(args: argparse.Namespace) -> int:
                 ),
                 "confusion": summary.confusion,
                 "synthetic": args.synthetic,
+                "min_kappa": args.min_kappa,
             },
         )
+    if args.min_kappa is not None and summary.kappa < args.min_kappa:
+        print(
+            f"jck agree: kappa {summary.kappa:.3f} ({args.col_a} vs {args.col_b}) "
+            f"is below --min-kappa {args.min_kappa}",
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 
@@ -261,6 +269,11 @@ def main(argv: list[str] | None = None) -> int:
     agree.add_argument("--out", type=Path, help="markdown report path (default: stdout)")
     agree.add_argument("--json", type=Path, help="optional machine-readable summary")
     agree.add_argument("--synthetic", action="store_true", help="label the report as a demo")
+    agree.add_argument(
+        "--min-kappa",
+        type=_kappa_floor,
+        help="exit 1 when rater A vs rater B kappa is below this floor (label-quality gate)",
+    )
     agree.set_defaults(func=_cmd_agree)
 
     ab = sub.add_parser(
